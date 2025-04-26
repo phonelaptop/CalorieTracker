@@ -1,18 +1,28 @@
-const express = require('express');
-const {fetchUsers} = require('./db/db');
+require("dotenv").config();
+
+const express = require("express");
+const { connectToDatabase } = require("./db/db");
+const { userRoutes } = require("./routes/userRoutes");
+const { nutritionRoutes } = require("./routes/nutritionRoutes");
+const { exerciseRoutes } = require("./routes/exerciseRoutes");
+const { authRoutes } = require("./routes/authRoutes");
+const { requireAuth } = require("./middleware/authMiddleware");
 
 const app = express();
+app.use(express.json());
 const port = 3000;
 
-app.get('/', (req, res) => {
-  res.send('Hello World!');
-});
+const server = async () => {
+  await connectToDatabase();
 
-app.get('/calorieData', (req, res) => {
-    fetchUsers()
-    res.send('This is the calorie page')
-});
+  app.use("/api/auth", authRoutes);
+  app.use("/api/users", requireAuth, userRoutes);
+  app.use("/api/nutrition", requireAuth, nutritionRoutes);
+  app.use("/api/exercise", requireAuth, exerciseRoutes);
 
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
-});
+  app.listen(port, () => {
+    console.log(`Example app listening on port ${port}`);
+  });
+};
+
+server();
