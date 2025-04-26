@@ -1,18 +1,23 @@
 const express = require('express');
-const {fetchUsers} = require('./db/db');
+const {connectToDatabase} = require('./db/db');
+const { userRoutes } = require('./routes/userRoutes');
+const { nutritionRoutes } = require('./routes/nutritionRoutes');
+const { exerciseRoutes } = require('./routes/exerciseRoutes')
 
 const app = express();
+app.use(express.json());
 const port = 3000;
 
-app.get('/', (req, res) => {
-  res.send('Hello World!');
-});
+const server = async () => {
+  await connectToDatabase()
+  
+  app.use('/api/users', userRoutes);
+  app.use('/api/nutrition', nutritionRoutes);
+  app.use('/api/exercise', exerciseRoutes)
 
-app.get('/calorieData', (req, res) => {
-    fetchUsers()
-    res.send('This is the calorie page')
-});
+  app.listen(port, () => {
+    console.log(`Example app listening on port ${port}`);
+  });
+}
 
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
-});
+server()
