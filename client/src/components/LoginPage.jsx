@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Box, Button, TextField, Typography, Paper } from "@mui/material";
+import { useAuth } from "../hooks/useAuth";
 
 export const LoginPage = () => {
+  const { login } = useAuth();
   const [isSignup, setIsSignup] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
@@ -12,7 +14,7 @@ export const LoginPage = () => {
   });
 
   const handleChange = (e) => {
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value,
     }));
@@ -22,48 +24,36 @@ export const LoginPage = () => {
     e.preventDefault();
 
     try {
-      if (isSignup) {
-        const response = await fetch("/api/auth/register", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
+      const endpoint = isSignup ? "/api/auth/register" : "/api/auth/login";
+      const payload = isSignup 
+        ? {
             first_name: formData.firstName,
             last_name: formData.lastName,
             email: formData.email,
             password: formData.password,
-          }),
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          alert("Registration successful! You can now sign in.");
-          setIsSignup(false); // Switch to login mode after signup
-        } else {
-          alert(data.error || "Registration failed.");
-        }
-      } else {
-        const response = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
+          }
+        : {
             email: formData.email,
             password: formData.password,
-          }),
-        });
+          };
 
-        const data = await response.json();
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-        if (response.ok) {
-          localStorage.setItem("token", data.token);
-          console.log("Logged in user:", data.user);
+      const data = await response.json();
+
+      if (response.ok) {
+        if (isSignup) {
+          alert("Registration successful! You can now sign in.");
+          setIsSignup(false);
         } else {
-          alert(data.error || "Login failed.");
+          login(data.token);
         }
+      } else {
+        alert(data.error || `${isSignup ? 'Registration' : 'Login'} failed.`);
       }
     } catch (err) {
       console.error(err);
@@ -71,93 +61,65 @@ export const LoginPage = () => {
     }
   };
 
-  const toggleMode = () => {
-    setIsSignup((prev) => !prev);
-  };
+  const toggleMode = () => setIsSignup(prev => !prev);
+  
+  // Development test login
+  const handleTestLogin = () => login('test-token-123');
 
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
-      <Box
-        sx={{
-          flex: { xs: "1 1 100%", md: "1 1 70%" },
+      {/* Left Panel - Form */}
+      <Box sx={{ 
+        flex: { xs: "1 1 100%", md: "1 1 70%" },
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}>
+        <Paper elevation={6} sx={{ 
+          width: "100%", 
+          height: "100%",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-        }}
-      >
-        <Paper
-          elevation={6}
-          sx={{
-            width: "100%",
-            height: "100%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
+        }}>
           <Box sx={{ width: "80%", maxWidth: "500px" }}>
-            <Typography
-              component="h1"
-              variant="h5"
-              gutterBottom
-              sx={{
-                fontFamily: "Montserrat",
-                fontSize: "39px",
-                textAlign: "center",
-                fontWeight: "700",
-              }}
-            >
+            <Typography variant="h4" gutterBottom sx={{
+              fontFamily: "Montserrat",
+              textAlign: "center",
+              fontWeight: "700",
+              mb: 4
+            }}>
               {isSignup ? "Sign Up to your Account" : "Login to your Account"}
             </Typography>
-            <Box
-              component="form"
-              onSubmit={handleSubmit}
-              sx={{
-                mt: 1,
-              }}
-            >
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "row",
-                  gap: "20px",
-                }}
-              >
-                {isSignup
-                  ? [
-                      <TextField
-                        margin="normal"
-                        fullWidth
-                        label="First Name"
-                        name="firstName"
-                        type="text"
-                        value={formData.firstName}
-                        onChange={handleChange}
-                        required
-                        sx={{
-                          "& .MuiInputBase-input": {
-                            fontFamily: "Montserrat",
-                          },
-                        }}
-                      />,
-                      <TextField
-                        margin="normal"
-                        fullWidth
-                        label="Last Name"
-                        name="lastName"
-                        type="text"
-                        value={formData.lastName}
-                        onChange={handleChange}
-                        required
-                        sx={{
-                          "& .MuiInputBase-input": {
-                            fontFamily: "Montserrat",
-                          },
-                        }}
-                      />,
-                    ]
-                  : null}
-              </Box>
+
+            <Box component="form" onSubmit={handleSubmit}>
+              {/* Name Fields for Signup */}
+              {isSignup && (
+                <Box sx={{ display: "flex", gap: 2 }}>
+                  <TextField
+                    margin="normal"
+                    fullWidth
+                    label="First Name"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    required
+                    sx={{ "& .MuiInputBase-input": { fontFamily: "Montserrat" } }}
+                  />
+                  <TextField
+                    margin="normal"
+                    fullWidth
+                    label="Last Name"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    required
+                    sx={{ "& .MuiInputBase-input": { fontFamily: "Montserrat" } }}
+                  />
+                </Box>
+              )}
+
+              {/* Email & Password */}
               <TextField
                 margin="normal"
                 fullWidth
@@ -167,13 +129,8 @@ export const LoginPage = () => {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                sx={{
-                  "& .MuiInputBase-input": {
-                    fontFamily: "Montserrat",
-                  },
-                }}
+                sx={{ "& .MuiInputBase-input": { fontFamily: "Montserrat" } }}
               />
-
               <TextField
                 margin="normal"
                 fullWidth
@@ -183,12 +140,10 @@ export const LoginPage = () => {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                sx={{
-                  "& .MuiInputBase-input": {
-                    fontFamily: "Montserrat",
-                  },
-                }}
+                sx={{ "& .MuiInputBase-input": { fontFamily: "Montserrat" } }}
               />
+
+              {/* Confirm Password for Signup */}
               {isSignup && (
                 <TextField
                   margin="normal"
@@ -199,18 +154,15 @@ export const LoginPage = () => {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   required
-                  sx={{
-                    "& .MuiInputBase-input": {
-                      fontFamily: "Montserrat",
-                    },
-                  }}
+                  sx={{ "& .MuiInputBase-input": { fontFamily: "Montserrat" } }}
                 />
               )}
+
+              {/* Submit Button */}
               <Button
                 type="submit"
                 fullWidth
                 variant="contained"
-                color="success"
                 sx={{
                   mt: 3,
                   borderRadius: 5,
@@ -220,43 +172,53 @@ export const LoginPage = () => {
               >
                 {isSignup ? "Sign Up" : "Sign In"}
               </Button>
+
+              {/* Test Login - Development Only */}
+              {!isSignup && (
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  onClick={handleTestLogin}
+                  sx={{
+                    mt: 2,
+                    borderRadius: 5,
+                    fontFamily: "Montserrat",
+                    borderColor: "#3AA8AE",
+                    color: "#3AA8AE",
+                  }}
+                >
+                  Test Login (Dev Only)
+                </Button>
+              )}
             </Box>
           </Box>
         </Paper>
       </Box>
 
-      {/* Right side - Toggle section */}
-      <Box
-        sx={{
-          flex: { xs: "0", md: "1 1 30%" },
-          display: { xs: "none", md: "flex" },
-          background: "linear-gradient(to right, #3AA8AE, #38B98C)",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "white",
-          flexDirection: "column",
+      {/* Right Panel - Toggle */}
+      <Box sx={{
+        flex: { xs: "0", md: "1 1 30%" },
+        display: { xs: "none", md: "flex" },
+        background: "linear-gradient(to right, #3AA8AE, #38B98C)",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "white",
+        flexDirection: "column",
+        p: 4,
+      }}>
+        <Typography variant="h3" sx={{
+          fontWeight: "bold",
+          textAlign: "center",
           fontFamily: "Montserrat",
-          p: 4,
-        }}
-      >
-        <Typography
-          variant="h3"
-          sx={{
-            fontWeight: "bold",
-            textAlign: "center",
-            fontFamily: "Montserrat",
-          }}
-        >
+          mb: 2
+        }}>
           {isSignup ? "Already have an account?" : "New Here?"}
         </Typography>
-        <Typography
-          variant="subtitle1"
-          sx={{
-            mb: "2",
-            fontFamily: "Montserrat",
-            fontSize: "20px",
-          }}
-        >
+        <Typography variant="subtitle1" sx={{
+          mb: 3,
+          fontFamily: "Montserrat",
+          fontSize: "20px",
+        }}>
           {isSignup ? "Sign in and continue" : "Sign up and discover"}
         </Typography>
         <Button

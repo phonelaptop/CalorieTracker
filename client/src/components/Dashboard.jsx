@@ -1,81 +1,63 @@
 import { AppBar, Box, Toolbar, Typography, Button } from "@mui/material";
+import { useAuth } from "../hooks/useAuth";
 import food from "../img/food.jpg";
 
 export const Dashboard = () => {
+  const { logout } = useAuth();
   const menuItems = ["Start", "Track"];
 
   return (
     <>
-      <AppBar
-        position="static"
-        sx={{
-          backgroundColor: "#FFFFFF",
-          boxShadow: "unset",
-        }}
-      >
+      {/* Navigation Bar */}
+      <AppBar position="static" sx={{
+        backgroundColor: "#FFFFFF",
+        boxShadow: "none",
+      }}>
         <Toolbar>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "left",
-            }}
-          >
-            <Button
-              variant="Button"
-              sx={{
-                flexGrow: 1,
-                fontFamily: "Montserrat",
-                color: "#000000",
-                fontWeight: "600",
-                margin: "20px",
-                fontSize: "20px",
-              }}
-            >
+          {/* Left Side - Logo & Menu */}
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            <Typography variant="h6" sx={{
+              fontFamily: "Montserrat",
+              color: "#000000",
+              fontWeight: "600",
+              fontSize: "20px",
+              mr: 4
+            }}>
               CalorieTracker
-            </Button>
-            <Box
-              sx={{
-                display: { xs: "none", md: "block" },
-                display: "flex",
-              }}
-            >
+            </Typography>
+            
+            <Box sx={{ 
+              display: { xs: "none", md: "flex" },
+              gap: 2
+            }}>
               {menuItems.map((item) => (
-                <Button
-                  key={item}
-                  color="inherit"
-                  sx={{
-                    fontFamily: "Montserrat",
-                    color: "#000000",
-                    gap: "10px",
-                  }}
-                >
+                <Button key={item} sx={{
+                  fontFamily: "Montserrat",
+                  color: "#000000",
+                }}>
                   {item}
                 </Button>
               ))}
             </Box>
           </Box>
-          <Box
-            sx={{
-              marginLeft: "auto",
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-            }}
-          >
-            <Typography
-              variant="h6"
-              sx={{
-                fontFamily: "Montserrat",
-                color: "#000000",
-                fontSize: "14px",
-              }}
-            >
+
+          {/* Right Side - User Info & Logout */}
+          <Box sx={{
+            marginLeft: "auto",
+            display: "flex",
+            alignItems: "center",
+            gap: 2
+          }}>
+            <Typography sx={{
+              fontFamily: "Montserrat",
+              color: "#000000",
+              fontSize: "14px",
+            }}>
               Hi, name
             </Typography>
-            <Button
-              variant="button"
+            <Button 
+              onClick={logout}
               sx={{
-                flexGrow: 1,
                 fontFamily: "Montserrat",
                 color: "#000000",
               }}
@@ -85,53 +67,42 @@ export const Dashboard = () => {
           </Box>
         </Toolbar>
       </AppBar>
-      <Box
-        sx={{
-          backgroundImage: `url(${food})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          height: "750px",
-          position: "relative",
+
+      {/* Hero Section */}
+      <Box sx={{
+        backgroundImage: `url(${food})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        height: "750px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}>
+        <Box sx={{
           display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
+          flexDirection: "column",
+          textAlign: "center"
+        }}>
+          <Typography variant="h1" sx={{
+            fontFamily: "Montserrat",
+            color: "#FFFFFF",
+            fontSize: "64px",
+            fontWeight: "700",
+            WebkitTextStroke: "0.5px black",
+            textShadow: "-1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black, 1px 1px 0 black",
+            mb: 2
           }}>
-          <Typography
-            variant="h6"
-            sx={{
-              fontFamily: "Montserrat",
-              color: "#FFFFFF",
-              fontSize: "64px",
-              WebkitTextStroke: "0.5px black",
-              textShadow:
-                "-0.5px -0.5px 0 black, 0.5px -0.5px 0 black, -0.5px 0.5px 0 black, 0.5px 0.5px 0 black",
-              fontWeight: "700",
-              display: "flex",
-              justifyContent: "center"
-            }}
-          >
             CalorieTracker
           </Typography>
-          <Typography
-            variant="p"
-            sx={{
-              fontFamily: "Montserrat",
-              color: "#FFFFFF",
-              fontSize: "32px",
-              WebkitTextStroke: "0.5px black",
-              textShadow:
-                "-0.5px -0.5px 0 black, 0.5px -0.5px 0 black, -0.5px 0.5px 0 black, 0.5px 0.5px 0 black",
-              fontWeight: "750",
-              display: "flex",  
-              justifyContent: "center"
-            }}
-          >
+          
+          <Typography variant="h2" sx={{
+            fontFamily: "Montserrat",
+            color: "#FFFFFF",
+            fontSize: "32px",
+            fontWeight: "600",
+            WebkitTextStroke: "0.5px black",
+            textShadow: "-1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black, 1px 1px 0 black",
+          }}>
             Receive fast data of your calorie intake
           </Typography>
         </Box>
