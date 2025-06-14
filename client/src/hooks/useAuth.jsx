@@ -6,16 +6,13 @@ import { FormPage } from "../components/FormPage";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { UploadFilePage } from "../components/UploadFilePage";
 
-// Create Auth Context
 const AuthContext = createContext();
 
-// Auth Provider Component
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in on app start
     const token = localStorage.getItem('token');
     setIsAuthenticated(!!token);
     setLoading(false);

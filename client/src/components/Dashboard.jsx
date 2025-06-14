@@ -1,20 +1,19 @@
 import { AppBar, Box, Toolbar, Typography, Button } from "@mui/material";
 import { useAuth } from "../hooks/useAuth";
 import food from "../img/food.jpg";
+import { useNavigate } from "react-router-dom";
 
 export const Dashboard = () => {
   const { logout } = useAuth();
-  const menuItems = ["Start", "Track"];
+  const navigate = useNavigate()
 
   return (
     <>
-      {/* Navigation Bar */}
       <AppBar position="static" sx={{
         backgroundColor: "#FFFFFF",
         boxShadow: "none",
       }}>
         <Toolbar>
-          {/* Left Side - Logo & Menu */}
           <Box sx={{ display: "flex", alignItems: "center" }}>
             <Typography variant="h6" sx={{
               fontFamily: "Montserrat",
@@ -30,18 +29,18 @@ export const Dashboard = () => {
               display: { xs: "none", md: "flex" },
               gap: 2
             }}>
-              {menuItems.map((item) => (
-                <Button key={item} sx={{
-                  fontFamily: "Montserrat",
-                  color: "#000000",
-                }}>
-                  {item}
-                </Button>
-              ))}
+              <Button sx={{
+                fontFamily: "Montserrat",
+                color: "#000000",
+              }}
+              onClick={() => {
+                navigate('/upload')
+              }}>
+                Start
+              </Button>
             </Box>
           </Box>
 
-          {/* Right Side - User Info & Logout */}
           <Box sx={{
             marginLeft: "auto",
             display: "flex",
@@ -68,7 +67,6 @@ export const Dashboard = () => {
         </Toolbar>
       </AppBar>
 
-      {/* Hero Section */}
       <Box sx={{
         backgroundImage: `url(${food})`,
         backgroundSize: "cover",

@@ -1,0 +1,16 @@
+{
+    "name": "calorietracker",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+      "install": "concurrently \"cd client && npm i\" \"cd server && npm i\"",
+      "start": "concurrently \"cd client && npm start\" \"cd server && npm start\""
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+      "concurrently": "^9.1.2"
+    }
+}  
