@@ -10,8 +10,42 @@ const analyzeFoodWithGemini = async (imagePath) => {
     const imageBase64 = imageBuffer.toString('base64');
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    const prompt = `Analyze this food image and return ONLY a JSON array with this structure:
-[{"ingredientName": "string", "portionSize(g)": number, "nutritionFacts": {"calories": number, "protein_g": number, "carbohydrates_g": number, "fat_g": number, "keyVitaminsAndMinerals": ["Vitamin A", "Calcium"]}}]
+    const prompt = `
+    Analyze this food image and return ONLY a JSON array with this structure:
+    [
+      {
+        "ingredientName": "string",
+        "portionSize(g)": number,
+        "nutritionFacts": 
+          {
+            "calories": number,
+            "protein_g": number,
+            "carbohydrates_g": number,
+            "fat_g": number,
+            "fiber_g": number,
+            "sugar_g": number,
+            "sodium_mg": number,
+            "Vitamin A": number,
+            "Vitamin C": number,
+            "Vitamin D": number,
+            "Vitamin E": number,
+            "Vitamin K": number,
+            "Vitamin B1": number,
+            "Vitamin B2": number,
+            "Vitamin B3": number,
+            "Vitamin B6": number,
+            "Vitamin B12": number,
+            "Folate": number,
+            "Calcium": number,
+            "Iron": number,
+            "Magnesium": number,
+            "Phosphorus": number,
+            "Potassium": number,
+            "Zinc": number,
+            "Selenium": number
+          }
+      }
+    ]
 Return raw JSON only, no markdown or explanations.`;
 
     const result = await model.generateContent({

@@ -5,6 +5,7 @@ import { Dashboard } from "./Dashboard";
 import { FormPage } from "./FormPage";
 import { UploadFilePage } from "./UploadFilePage";
 import { LoadingScreen } from "./LoadingScreen";
+import { AnalyticsPage } from "./AnalyticsPage";
 
 export const AppContent = () => {
   const { isAuthenticated, loading } = useAuth();
@@ -22,6 +23,7 @@ export const AppContent = () => {
       <Route path="/" element={<Dashboard />} />
       <Route path="/form" element={<FormPage />} />
       <Route path="/upload" element={<UploadFilePage />} />
+      <Route path="/analytics" element={<AnalyticsPage />} />
       <Route path="*" element={<Dashboard />} />
     </Routes>
   );
