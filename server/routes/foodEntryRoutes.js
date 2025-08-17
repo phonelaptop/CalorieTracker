@@ -1,15 +1,20 @@
 const express = require("express");
-const { FoodEntry } = require("../models/FoodEntry");
 const router = express.Router();
+const { FoodEntry } = require("../models/FoodEntry");
+const { analyzeNutritionWithGemini } = require("../utils/healthModel");
 
+// Create new food entry/entries (supports both single object and array)
 router.post("/", async (req, res) => {
   try {
     const userId = req.user.id;
-    const foodEntries = req.body;
+    const requestData = req.body;
 
-    if (!Array.isArray(foodEntries)) {
+    // Handle both single object and array
+    const foodEntries = Array.isArray(requestData) ? requestData : [requestData];
+
+    if (foodEntries.length === 0) {
       return res.status(400).json({ 
-        message: "Request body must be an array of food entries" 
+        message: "Request body cannot be empty" 
       });
     }
 
@@ -74,6 +79,7 @@ router.post("/", async (req, res) => {
   }
 });
 
+// Get user's food entries with pagination and filtering
 router.get("/", async (req, res) => {
   try {
     const userId = req.user.id;
@@ -82,12 +88,18 @@ router.get("/", async (req, res) => {
       limit = 10, 
       startDate, 
       endDate,
-      ingredient 
+      ingredient,
+      days 
     } = req.query;
 
     const query = { userId };
     
-    if (startDate || endDate) {
+    // Handle days parameter for simple date filtering
+    if (days) {
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - parseInt(days));
+      query.consumedAt = { $gte: startDate };
+    } else if (startDate || endDate) {
       query.consumedAt = {};
       if (startDate) query.consumedAt.$gte = new Date(startDate);
       if (endDate) query.consumedAt.$lte = new Date(endDate);
@@ -121,6 +133,7 @@ router.get("/", async (req, res) => {
   }
 });
 
+// Get single food entry by ID
 router.get("/:id", async (req, res) => {
   try {
     const userId = req.user.id;
@@ -143,6 +156,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+// Update food entry
 router.put("/:id", async (req, res) => {
   try {
     const userId = req.user.id;
@@ -175,6 +189,7 @@ router.put("/:id", async (req, res) => {
   }
 });
 
+// Delete food entry
 router.delete("/:id", async (req, res) => {
   try {
     const userId = req.user.id;
@@ -200,6 +215,7 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
+// Get daily nutrition stats
 router.get("/stats/daily", async (req, res) => {
   try {
     const userId = req.user.id;
@@ -264,6 +280,7 @@ router.get("/stats/daily", async (req, res) => {
   }
 });
 
+// Get monthly nutrition stats
 router.get("/stats/monthly", async (req, res) => {
   try {
     const userId = req.user.id;
@@ -349,6 +366,31 @@ router.get("/stats/monthly", async (req, res) => {
     res.status(500).json({ 
       message: "Failed to fetch monthly stats" 
     });
+  }
+});
+
+// Get nutrition analysis and health suggestions
+router.get("/analysis/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { days = 7 } = req.query;
+
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - parseInt(days));
+
+    const entries = await FoodEntry.find({
+      userId,
+      consumedAt: { $gte: startDate }
+    }).sort({ consumedAt: -1 });
+
+    if (entries.length === 0) {
+      return res.status(404).json({ message: "No food entries found" });
+    }
+
+    const analysis = await analyzeNutritionWithGemini(entries, days);
+    res.status(200).json(analysis);
+  } catch (error) {
+    res.status(400).json({ message: "Error analyzing nutrition data", error: error.message });
   }
 });
 

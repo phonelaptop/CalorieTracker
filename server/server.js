@@ -15,13 +15,16 @@ const port = 4000;
 const server = async () => {
   await connectToDatabase();
 
+  // Public routes (no authentication required)
   app.use("/api/auth", authRoutes);
+
+  // Protected routes (authentication required)
   app.use("/api/users", requireAuth, userRoutes);
   app.use("/api/ml", requireAuth, mlRoutes);
   app.use("/api/foodentry", requireAuth, foodEntryRoutes);
 
   app.listen(port, () => {
-    console.log(`Example app listening on port ${port}`);
+    console.log(`Server listening on port ${port}`);
   });
 };
 
