@@ -1,19 +1,25 @@
-import { Box, Typography, Button, Collapse, Card, CardContent, LinearProgress, Grid, Chip } from "@mui/material";
+import { Box, Typography, Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { ExpandMore, ExpandLess, TrendingUp, Assignment, Restaurant } from "@mui/icons-material";
 import axios from "axios";
 import food from "../../img/food.jpg";
 import { useAuth } from "../../hooks/useAuth";
 
+
+import {InstructionsCard}  from "../dashboard/InstructionCard";
+import {AIHealthSuggestions} from "../dashboard/AIHealthSuggestions";
+import {RecentFoodsCard} from "./RecentFoods/RecentFoodCard";
+import {NutritionProgress} from "../dashboard/NutritionProgress";
+import {NutritionNeeds} from "../dashboard/NutritionNeeds";
+
 export const Dashboard = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-  const [instructionsOpen, setInstructionsOpen] = useState(false);
   const [nutritionData, setNutritionData] = useState(null);
+  const [recentFoods, setRecentFoods] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch today's nutrition data
+  // Fetch today's nutrition data and recent foods
   useEffect(() => {
     const fetchNutritionData = async () => {
       try {
@@ -27,18 +33,57 @@ export const Dashboard = () => {
         calculateNutritionProgress(response.data.totals, response.data.entries);
       } catch (error) {
         console.error('Error fetching nutrition data:', error);
+        // Mock data for demo purposes
+        const mockTotals = {
+          calories: 1650,
+          protein_g: 85,
+          carbohydrates_g: 180,
+          fat_g: 65
+        };
+        const mockEntries = [
+          { fiber_g: 12, calcium: 400, iron: 8, vitamin_D: 200 },
+          { fiber_g: 6, calcium: 300, iron: 4, vitamin_D: 100 }
+        ];
+        calculateNutritionProgress(mockTotals, mockEntries);
       } finally {
         setLoading(false);
       }
     };
 
+    const fetchRecentFoods = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const response = await axios.get(`/api/foodentry/recent?days=7`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        setRecentFoods(response.data);
+      } catch (error) {
+        console.error('Error fetching recent foods:', error);
+        // Mock recent foods data
+        const mockRecentFoods = [
+          { food_name: "Grilled Chicken", date: "2024-01-20", meal_type: "lunch" },
+          { food_name: "Brown Rice", date: "2024-01-20", meal_type: "lunch" },
+          { food_name: "Salmon Fillet", date: "2024-01-19", meal_type: "dinner" },
+          { food_name: "Greek Yogurt", date: "2024-01-19", meal_type: "breakfast" },
+          { food_name: "Spinach Salad", date: "2024-01-18", meal_type: "lunch" },
+          { food_name: "Oatmeal", date: "2024-01-18", meal_type: "breakfast" },
+          { food_name: "Banana", date: "2024-01-17", meal_type: "snack" },
+          { food_name: "Whole Wheat Toast", date: "2024-01-17", meal_type: "breakfast" }
+        ];
+        setRecentFoods(mockRecentFoods);
+      }
+    };
+
     if (isAuthenticated) {
       fetchNutritionData();
+      fetchRecentFoods();
     }
   }, [isAuthenticated]);
 
   const calculateNutritionProgress = (totals, entries) => {
-    // Daily targets (these could come from user profile)
     const targets = {
       calories: 2200,
       protein: 150,
@@ -73,7 +118,6 @@ export const Dashboard = () => {
       }
     };
 
-    // Calculate remaining nutrients for needs section
     const currentFiber = entries.reduce((sum, entry) => sum + (entry.fiber_g || 0), 0);
     const currentCalcium = entries.reduce((sum, entry) => sum + (entry.calcium || 0), 0);
     const currentIron = entries.reduce((sum, entry) => sum + (entry.iron || 0), 0);
@@ -109,25 +153,14 @@ export const Dashboard = () => {
     fontFamily: "Montserrat",
     color: "#fff",
     WebkitTextStroke: "0.5px black",
-    textShadow:
-      "-1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black, 1px 1px 0 black",
+    textShadow: "-1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black, 1px 1px 0 black",
   };
 
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login");
     }
-  }, []);
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "critical": return "#f44336";
-      case "low": return "#ff9800";
-      case "moderate": return "#2196f3";
-      case "good": return "#4caf50";
-      default: return "#757575";
-    }
-  };
+  }, [isAuthenticated, navigate]);
 
   return (
     <Box
@@ -177,148 +210,11 @@ export const Dashboard = () => {
 
       {/* Dashboard Sections */}
       <Box sx={{ maxWidth: 800, width: "100%", px: 2 }}>
-        {/* Instructions Section */}
-        <Card sx={{ mb: 3, bgcolor: "rgba(255, 255, 255, 0.95)" }}>
-          <CardContent>
-            <Button
-              onClick={() => setInstructionsOpen(!instructionsOpen)}
-              sx={{
-                width: "100%",
-                justifyContent: "space-between",
-                textTransform: "none",
-                color: "#333",
-                fontSize: "18px",
-                fontWeight: 600,
-              }}
-              endIcon={instructionsOpen ? <ExpandLess /> : <ExpandMore />}
-            >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Assignment />
-                How to Use CalorieTracker
-              </Box>
-            </Button>
-            
-            <Collapse in={instructionsOpen}>
-              <Box sx={{ pt: 2, borderTop: "1px solid #eee", mt: 2 }}>
-                <Typography variant="body1" sx={{ mb: 1, fontWeight: 500 }}>
-                  Track your nutrition in 3 simple steps:
-                </Typography>
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  <strong>1.</strong> Upload a photo of your meal or scan barcode
-                </Typography>
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  <strong>2.</strong> Confirm detected foods and adjust portions
-                </Typography>
-                <Typography variant="body2">
-                  <strong>3.</strong> View your daily progress and nutrition insights
-                </Typography>
-              </Box>
-            </Collapse>
-          </CardContent>
-        </Card>
-
-        {/* Nutrition Progress Section */}
-        <Card sx={{ mb: 3, bgcolor: "rgba(255, 255, 255, 0.95)" }}>
-          <CardContent>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
-              <TrendingUp />
-              <Typography variant="h6" sx={{ fontWeight: 600, color: "#333" }}>
-                Today's Progress
-              </Typography>
-            </Box>
-
-            {loading ? (
-              <Typography>Loading...</Typography>
-            ) : nutritionData ? (
-              <Grid container spacing={2}>
-                {Object.entries(nutritionData.progress).map(([key, data]) => (
-                  <Grid item xs={6} sm={3} key={key}>
-                    <Box sx={{ textAlign: "center" }}>
-                      <Typography variant="body2" sx={{ fontWeight: 500, mb: 1, textTransform: "capitalize" }}>
-                        {key}
-                      </Typography>
-                      <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-                        {Math.round(data.current)}/{data.target}{key === "calories" ? "" : "g"}
-                      </Typography>
-                      <LinearProgress
-                        variant="determinate"
-                        value={data.percentage}
-                        sx={{
-                          height: 8,
-                          borderRadius: 4,
-                          bgcolor: "#e0e0e0",
-                          "& .MuiLinearProgress-bar": {
-                            bgcolor: data.percentage >= 90 ? "#4caf50" : data.percentage >= 70 ? "#2196f3" : "#ff9800"
-                          }
-                        }}
-                      />
-                      <Typography variant="caption" sx={{ color: "#666", mt: 0.5 }}>
-                        {Math.round(data.percentage)}%
-                      </Typography>
-                    </Box>
-                  </Grid>
-                ))}
-              </Grid>
-            ) : (
-              <Typography>No data available for today</Typography>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Nutrition Needs Section */}
-        <Card sx={{ bgcolor: "rgba(255, 255, 255, 0.95)" }}>
-          <CardContent>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
-              <Restaurant />
-              <Typography variant="h6" sx={{ fontWeight: 600, color: "#333" }}>
-                What You Still Need
-              </Typography>
-            </Box>
-
-            {loading ? (
-              <Typography>Loading...</Typography>
-            ) : nutritionData ? (
-              <Grid container spacing={2}>
-                {nutritionData.needs.map((item, index) => (
-                  <Grid item xs={12} sm={6} key={index}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        p: 2,
-                        bgcolor: "#f9f9f9",
-                        borderRadius: 2,
-                        border: `2px solid ${getStatusColor(item.status)}20`,
-                      }}
-                    >
-                      <Box>
-                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                          {item.nutrient}
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: "#666" }}>
-                          {item.amount} remaining
-                        </Typography>
-                      </Box>
-                      <Chip
-                        label={item.status}
-                        size="small"
-                        sx={{
-                          bgcolor: getStatusColor(item.status),
-                          color: "#fff",
-                          fontWeight: 500,
-                          textTransform: "capitalize"
-                        }}
-                      />
-                    </Box>
-                  </Grid>
-                ))}
-              </Grid>
-            ) : (
-              <Typography>No data available</Typography>
-            )}
-          </CardContent>
-        </Card>
+        <InstructionsCard />
+        <AIHealthSuggestions />
+        <RecentFoodsCard recentFoods={recentFoods} loading={loading} />
+        <NutritionProgress nutritionData={nutritionData} loading={loading} />
+        <NutritionNeeds nutritionData={nutritionData} loading={loading} />
       </Box>
     </Box>
   );
