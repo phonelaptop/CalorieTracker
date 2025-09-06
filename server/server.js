@@ -16,7 +16,7 @@ app.use(express.json());
 app.use(cors({
   origin: [
     'http://localhost:3000',
-    'https://your-amplify-app-url.amplify.app'
+    'https://main.d238f39xg7s3sq.amplifyapp.com', 
   ],
   credentials: true
 }));
