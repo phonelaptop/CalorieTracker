@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import food from "../../img/food.jpg";
-import { useAuth } from "../../hooks/useAuth";
+import { useApi } from "../../hooks/useApi";
 
 
 import {InstructionsCard}  from "../dashboard/InstructionCard";
@@ -14,7 +14,7 @@ import {NutritionNeeds} from "../dashboard/NutritionNeeds";
 
 export const Dashboard = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useApi();
   const [nutritionData, setNutritionData] = useState(null);
   const [recentFoods, setRecentFoods] = useState(null);
   const [loading, setLoading] = useState(true);

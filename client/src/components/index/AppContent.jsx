@@ -1,5 +1,5 @@
 import { Routes, Route } from "react-router-dom";
-import { useAuth } from "../../hooks/useAuth";
+import { useApi } from "../../hooks/useApi";
 import { LoginPage } from "../login/LoginPage";
 import { Dashboard } from "../dashboard/Dashboard";
 import { UploadFilePage } from "../upload/UploadFilePage";
@@ -8,7 +8,7 @@ import { AnalyticsPage } from "../analytics/AnalyticsPage";
 import { HealthSuggestions } from "../health/HealthSuggestions";
 
 export const AppContent = () => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading } = useApi();
 
   if (loading) {
     return <LoadingScreen />;
