@@ -1,11 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { AppBar, Toolbar, Typography, Button, Container } from "@mui/material";
-import { useAuth } from "../../hooks/useAuth";
+import { useApi } from "../../hooks/useApi";
 
 export const Navbar = () => {
-  const { logout } = useAuth();
+  const { logout } = useApi();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useApi();
   if (!isAuthenticated) {
     return (null);
   }

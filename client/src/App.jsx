@@ -1,13 +1,13 @@
 import { BrowserRouter as Router } from "react-router-dom";
 import { Box } from "@mui/material";
-import { AuthProvider } from "./hooks/useAuth";
+import { AppProvider } from "./hooks/useApi";
 import { AppContent } from "./components/index/AppContent";
 import { Navbar } from "./components/layout/Navbar"
 import { Footer } from "./components/layout/Footer"
 
 export const App = () => {
   return (
-    <AuthProvider>
+    <AppProvider>
       <Router>
         <Box className="App">
           <Navbar />
@@ -15,6 +15,6 @@ export const App = () => {
           <Footer />
         </Box>
       </Router>
-    </AuthProvider>
+    </AppProvider>
   );
 };

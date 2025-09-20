@@ -13,10 +13,11 @@ import {
   IconButton,
   Button
 } from '@mui/material';
-import axios from 'axios';
+import { useApi } from '../../hooks/useApi'; // Adjust import path
 
 export const AnalyticsPage = () => {
   const navigate = useNavigate();
+  const { getDailyStats } = useApi();
   const [loading, setLoading] = useState(false);
   const [entries, setEntries] = useState([]);
   const [currentDayDate, setCurrentDayDate] = useState(() => {
@@ -34,11 +35,15 @@ export const AnalyticsPage = () => {
   const fetchDayData = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`/api/foodentry/stats/daily?date=${currentDayDate}`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
-      setEntries(response.data.entries || []);
+      const result = await getDailyStats(currentDayDate);
+      if (result.success) {
+        setEntries(result.data.entries || []);
+      } else {
+        console.error('Failed to fetch daily stats:', result.error);
+        setEntries([]);
+      }
     } catch (error) {
+      console.error('Error fetching daily stats:', error);
       setEntries([]);
     } finally {
       setLoading(false);

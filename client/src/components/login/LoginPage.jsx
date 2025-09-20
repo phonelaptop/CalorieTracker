@@ -1,10 +1,13 @@
 import { useState } from "react";
-import { Box, Button, TextField, Typography, Paper } from "@mui/material";
-import { useAuth } from "../../hooks/useAuth";
+import { Box, Button, TextField, Typography, Paper, Alert } from "@mui/material";
+import { useApi } from "../../hooks/useApi";
 
 export const LoginPage = () => {
-  const { login } = useAuth();
+  const { login, register } = useApi();
   const [isSignup, setIsSignup] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -18,53 +21,76 @@ export const LoginPage = () => {
       ...prev,
       [e.target.name]: e.target.value,
     }));
+    if (error) setError('');
+    if (success) setSuccess('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setSuccess('');
+    setLoading(true);
 
     try {
-      const endpoint = isSignup ? "/api/auth/register" : "/api/auth/login";
-      const payload = isSignup
-        ? {
-            first_name: formData.firstName,
-            last_name: formData.lastName,
-            email: formData.email,
-            password: formData.password,
-          }
-        : {
-            email: formData.email,
-            password: formData.password,
-          };
+      if (isSignup) {
+        // Validate confirm password
+        if (formData.password !== formData.confirmPassword) {
+          setError("Passwords don't match");
+          setLoading(false);
+          return;
+        }
 
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+        const result = await register({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          password: formData.password,
+        });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        if (isSignup) {
-          alert("Registration successful! You can now sign in.");
-          setIsSignup(false);
+        if (result.success) {
+          setSuccess(result.message || "Registration successful! You are now logged in.");
+          // Clear form
+          setFormData({
+            firstName: "",
+            lastName: "",
+            email: "",
+            password: "",
+            confirmPassword: "",
+          });
         } else {
-          login(data.token);
+          setError(result.error || "Registration failed");
         }
       } else {
-        alert(data.error || `${isSignup ? "Registration" : "Login"} failed.`);
+
+        const result = await login(formData.email, formData.password);
+
+        if (result.success) {
+          // Login successful - the ApiContext will handle redirecting
+          setSuccess("Login successful!");
+        } else {
+          setError(result.error || "Login failed");
+        }
       }
     } catch (err) {
-      console.error(err);
-      alert("An error occurred. Please try again.");
+      console.error('Auth error:', err);
+      setError("An error occurred. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const toggleMode = () => setIsSignup((prev) => !prev);
-
-  // Development test login
-  const handleTestLogin = () => login("test-token-123");
+  const toggleMode = () => {
+    setIsSignup((prev) => !prev);
+    setError('');
+    setSuccess('');
+    setFormData({
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    });
+  };
 
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
@@ -100,6 +126,18 @@ export const LoginPage = () => {
               {isSignup ? "Sign Up to your Account" : "Login to your Account"}
             </Typography>
 
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
+
+            {success && (
+              <Alert severity="success" sx={{ mb: 2 }}>
+                {success}
+              </Alert>
+            )}
+
             <Box component="form" onSubmit={handleSubmit}>
               {isSignup && (
                 <Box sx={{ display: "flex", gap: 2 }}>
@@ -111,6 +149,7 @@ export const LoginPage = () => {
                     value={formData.firstName}
                     onChange={handleChange}
                     required
+                    disabled={loading}
                     sx={{
                       "& .MuiInputBase-input": { fontFamily: "Montserrat" },
                     }}
@@ -123,6 +162,7 @@ export const LoginPage = () => {
                     value={formData.lastName}
                     onChange={handleChange}
                     required
+                    disabled={loading}
                     sx={{
                       "& .MuiInputBase-input": { fontFamily: "Montserrat" },
                     }}
@@ -140,6 +180,7 @@ export const LoginPage = () => {
                 value={formData.email}
                 onChange={handleChange}
                 required
+                disabled={loading}
                 sx={{ "& .MuiInputBase-input": { fontFamily: "Montserrat" } }}
               />
               <TextField
@@ -151,6 +192,7 @@ export const LoginPage = () => {
                 value={formData.password}
                 onChange={handleChange}
                 required
+                disabled={loading}
                 sx={{ "& .MuiInputBase-input": { fontFamily: "Montserrat" } }}
               />
 
@@ -165,6 +207,7 @@ export const LoginPage = () => {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   required
+                  disabled={loading}
                   sx={{ "& .MuiInputBase-input": { fontFamily: "Montserrat" } }}
                 />
               )}
@@ -174,6 +217,7 @@ export const LoginPage = () => {
                 type="submit"
                 fullWidth
                 variant="contained"
+                disabled={loading}
                 sx={{
                   mt: 3,
                   borderRadius: 5,
@@ -181,26 +225,11 @@ export const LoginPage = () => {
                   background: "linear-gradient(to right, #3AA8AE, #38B98C)",
                 }}
               >
-                {isSignup ? "Sign Up" : "Sign In"}
+                {loading 
+                  ? (isSignup ? "Signing Up..." : "Signing In...") 
+                  : (isSignup ? "Sign Up" : "Sign In")
+                }
               </Button>
-
-              {/* Test Login - Development Only
-              {!isSignup && (
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  onClick={handleTestLogin}
-                  sx={{
-                    mt: 2,
-                    borderRadius: 5,
-                    fontFamily: "Montserrat",
-                    borderColor: "#3AA8AE",
-                    color: "#3AA8AE",
-                  }}
-                >
-                  Test Login (Dev Only)
-                </Button>
-              )} */}
             </Box>
           </Box>
         </Paper>
@@ -243,6 +272,7 @@ export const LoginPage = () => {
         <Button
           variant="outlined"
           onClick={toggleMode}
+          disabled={loading}
           sx={{
             bgcolor: "white",
             color: "#00bfa5",

@@ -16,10 +16,11 @@ import {
   ListItemText
 } from '@mui/material';
 import { ArrowBack, Psychology, TrendingUp, Warning, Lightbulb } from '@mui/icons-material';
-import axios from 'axios';
+import { useApi } from '../../hooks/useApi'; // Adjust import path
 
 export const HealthSuggestions = () => {
   const navigate = useNavigate();
+  const { user, getHealthAnalysis } = useApi();
   const [loading, setLoading] = useState(true);
   const [analysis, setAnalysis] = useState(null);
   const [error, setError] = useState(null);
@@ -30,33 +31,22 @@ export const HealthSuggestions = () => {
 
   const fetchHealthSuggestions = async () => {
     try {
-      const token = localStorage.getItem('token');
-      
-      if (!token) {
-        throw new Error('No authentication token found. Please log in again.');
+      if (!user?.id) {
+        setError('User not found. Please log in again.');
+        return;
       }
 
-      // Decode JWT token to get user ID
-      let userId;
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        userId = payload.id || payload.userId || payload.sub;
-      } catch (e) {
-        throw new Error('Invalid token. Please log in again.');
-      }
+      setLoading(true);
+      const result = await getHealthAnalysis(user.id, 7);
       
-      if (!userId) {
-        throw new Error('User ID not found in token. Please log in again.');
+      if (result.success) {
+        setAnalysis(result.data);
+      } else {
+        setError(result.error);
       }
-
-      const response = await axios.get(`/api/foodentry/analysis/${userId}?days=7`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      
-      setAnalysis(response.data);
     } catch (err) {
       console.error('Error fetching health suggestions:', err);
-      setError(err.response?.data?.message || err.message || 'Failed to fetch health suggestions');
+      setError('Failed to fetch health suggestions');
     } finally {
       setLoading(false);
     }
