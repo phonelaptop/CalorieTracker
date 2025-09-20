@@ -16,10 +16,12 @@ app.use(express.json());
 app.use(cors({
   origin: [
     'http://localhost:3000',
-    'https://main.d238f39xg7s3sq.amplifyapp.com', 
+    'https://main.d238f39xg7s3sq.amplifyapp.com', // Your Amplify frontend
+    'https://xmttymakxz.us-west-2.awsapprunner.com' // Your backend (for testing)
   ],
   credentials: true
 }));
+
 
 const port = process.env.PORT || 8080;
 
