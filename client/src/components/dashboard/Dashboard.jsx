@@ -5,12 +5,11 @@ import axios from "axios";
 import food from "../../img/food.jpg";
 import { useApi } from "../../hooks/useApi";
 
-
-import {InstructionsCard}  from "../dashboard/InstructionCard";
-import {AIHealthSuggestions} from "../dashboard/AIHealthSuggestions";
-import {RecentFoodsCard} from "./RecentFoods/RecentFoodCard";
-import {NutritionProgress} from "../dashboard/NutritionProgress";
-import {NutritionNeeds} from "../dashboard/NutritionNeeds";
+import { InstructionsCard } from "./InstructionsCard";
+import { AIHealthSuggestions } from "../dashboard/AIHealthSuggestions";
+import { RecentFoodsCard } from "./RecentFoods/RecentFoodCard";
+import { NutritionProgress } from "../dashboard/NutritionProgress";
+import { NutritionNeeds } from "../dashboard/NutritionNeeds";
 
 export const Dashboard = () => {
   const navigate = useNavigate();
@@ -173,22 +172,37 @@ export const Dashboard = () => {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "flex-start",
-        pt: 4,
-        pb: 4,
+        pt: { xs: 2, sm: 4 },
+        pb: { xs: 2, sm: 4 },
       }}
     >
       {/* Hero Section */}
-      <Box sx={{ textAlign: "center", mb: 4 }}>
+      <Box sx={{ 
+        textAlign: "center", 
+        mb: { xs: 2, sm: 4 }, 
+        px: { xs: 2, sm: 0 } 
+      }}>
         <Typography
           variant="h1"
-          sx={{ ...textStyle, fontSize: "64px", fontWeight: 700, mb: 2 }}
+          sx={{ 
+            ...textStyle, 
+            fontSize: { xs: "32px", sm: "48px", md: "64px" }, 
+            fontWeight: 700, 
+            mb: { xs: 1, sm: 2 }
+          }}
         >
           CalorieTracker
         </Typography>
 
         <Typography
           variant="h2"
-          sx={{ ...textStyle, fontSize: "32px", fontWeight: 600, mb: 4 }}
+          sx={{ 
+            ...textStyle, 
+            fontSize: { xs: "18px", sm: "24px", md: "32px" }, 
+            fontWeight: 600, 
+            mb: { xs: 2, sm: 4 },
+            px: { xs: 1, sm: 0 }
+          }}
         >
           Receive fast data of your calorie intake
         </Typography>
@@ -199,8 +213,9 @@ export const Dashboard = () => {
           sx={{
             backgroundColor: "#fff",
             color: "#000",
-            py: 2,
-            px: 4,
+            py: { xs: 1.5, sm: 2 },
+            px: { xs: 3, sm: 4 },
+            fontSize: { xs: "14px", sm: "16px" },
             "&:hover": { backgroundColor: "#f5f5f5" },
           }}
         >
@@ -209,7 +224,11 @@ export const Dashboard = () => {
       </Box>
 
       {/* Dashboard Sections */}
-      <Box sx={{ maxWidth: 800, width: "100%", px: 2 }}>
+      <Box sx={{ 
+        maxWidth: 800, 
+        width: "100%", 
+        px: { xs: 0, sm: 2 }
+      }}>
         <InstructionsCard />
         <AIHealthSuggestions />
         <RecentFoodsCard recentFoods={recentFoods} loading={loading} />

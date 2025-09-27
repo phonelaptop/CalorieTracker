@@ -8,7 +8,7 @@ const analyzeFoodWithGemini = async (imagePath) => {
   try {
     const imageBuffer = fs.readFileSync(path.resolve(imagePath));
     const imageBase64 = imageBuffer.toString('base64');
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = `
     Analyze this food image and return ONLY a JSON array with this structure:
