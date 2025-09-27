@@ -22,7 +22,6 @@ app.use(cors({
   credentials: true
 }));
 
-
 const port = process.env.PORT || 8080;
 
 const server = async () => {
