@@ -1,3 +1,5 @@
+Disclaimer: snaktrak is a wellness tool that offers calorie estimates and health-related predictions based on user input and third-party data; these outputs are approximations, not objective measurements or medical advice. The app is not a medical device, hasn’t been evaluated by regulators, and shouldn’t be used to diagnose, treat, or make clinical decisions. Individual results will vary with logging habits, sensor accuracy, and data quality, and past trends don’t guarantee future outcomes. Always consult a qualified healthcare professional about your diet, exercise, or health concerns. If you believe you’re experiencing a medical emergency, call your local emergency number immediately. By using snaktrak, you accept these limitations and assume responsibility for how you use the information provided.
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
@@ -68,3 +70,5 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+

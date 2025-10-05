@@ -3,86 +3,88 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-/**
- * Analyzes nutrition data from food entries and provides health suggestions
- * @param {Array} foodEntries - Array of food entry documents
- * @param {number} days - Number of days the data spans
- * @returns {Object} Structured analysis and suggestions
- */
 async function analyzeNutritionWithGemini(foodEntries, days = 7) {
+  if (!Array.isArray(foodEntries)) {
+    throw new Error("foodEntries must be an array");
+  }
+
+  if (foodEntries.length === 0) {
+    throw new Error("No food entries to analyze");
+  }
+
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error("GEMINI_API_KEY is not configured");
+  }
+
   try {
-    // Aggregate nutrition data
     const nutritionSummary = aggregateNutritionData(foodEntries, days);
-    
-    // Create structured prompt for LLM
     const prompt = createNutritionAnalysisPrompt(nutritionSummary, days);
-    
+
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const analysisText = response.text();
-    
-    // Parse the structured response
+
     return parseNutritionAnalysis(analysisText);
   } catch (error) {
-    console.error("Error in nutrition analysis:", error);
     throw new Error(`Nutrition analysis failed: ${error.message}`);
   }
 }
 
-/**
- * Aggregates nutrition data from food entries
- * @param {Array} foodEntries - Array of food entry documents
- * @param {number} days - Number of days for averaging
- * @returns {Object} Aggregated nutrition data
- */
 function aggregateNutritionData(foodEntries, days) {
-  const totals = foodEntries.reduce((acc, entry) => {
-    acc.calories += entry.calories || 0;
-    acc.protein_g += entry.protein_g || 0;
-    acc.carbohydrates_g += entry.carbohydrates_g || 0;
-    acc.fat_g += entry.fat_g || 0;
-    acc.fiber_g += entry.fiber_g || 0;
-    acc.sugar_g += entry.sugar_g || 0;
-    acc.sodium_mg += entry.sodium_mg || 0;
-    acc.vitamin_A += entry.vitamin_A || 0;
-    acc.vitamin_C += entry.vitamin_C || 0;
-    acc.vitamin_D += entry.vitamin_D || 0;
-    acc.calcium += entry.calcium || 0;
-    acc.iron += entry.iron || 0;
-    acc.potassium += entry.potassium || 0;
-    acc.zinc += entry.zinc || 0;
-    return acc;
-  }, {
-    calories: 0, protein_g: 0, carbohydrates_g: 0, fat_g: 0, fiber_g: 0,
-    sugar_g: 0, sodium_mg: 0, vitamin_A: 0, vitamin_C: 0, vitamin_D: 0,
-    calcium: 0, iron: 0, potassium: 0, zinc: 0
-  });
+  const totals = foodEntries.reduce(
+    (acc, entry) => ({
+      calories: acc.calories + (entry.calories || 0),
+      protein_g: acc.protein_g + (entry.protein_g || 0),
+      carbohydrates_g: acc.carbohydrates_g + (entry.carbohydrates_g || 0),
+      fat_g: acc.fat_g + (entry.fat_g || 0),
+      fiber_g: acc.fiber_g + (entry.fiber_g || 0),
+      sugar_g: acc.sugar_g + (entry.sugar_g || 0),
+      sodium_mg: acc.sodium_mg + (entry.sodium_mg || 0),
+      vitamin_A: acc.vitamin_A + (entry.vitamin_A || 0),
+      vitamin_C: acc.vitamin_C + (entry.vitamin_C || 0),
+      vitamin_D: acc.vitamin_D + (entry.vitamin_D || 0),
+      calcium: acc.calcium + (entry.calcium || 0),
+      iron: acc.iron + (entry.iron || 0),
+      potassium: acc.potassium + (entry.potassium || 0),
+      zinc: acc.zinc + (entry.zinc || 0),
+    }),
+    {
+      calories: 0,
+      protein_g: 0,
+      carbohydrates_g: 0,
+      fat_g: 0,
+      fiber_g: 0,
+      sugar_g: 0,
+      sodium_mg: 0,
+      vitamin_A: 0,
+      vitamin_C: 0,
+      vitamin_D: 0,
+      calcium: 0,
+      iron: 0,
+      potassium: 0,
+      zinc: 0,
+    }
+  );
 
-  // Calculate daily averages
-  const dailyAverages = {};
-  Object.keys(totals).forEach(key => {
-    dailyAverages[key] = Math.round((totals[key] / days) * 100) / 100;
-  });
+  const dailyAverages = Object.fromEntries(
+    Object.entries(totals).map(([key, value]) => [
+      key,
+      Math.round((value / days) * 100) / 100,
+    ])
+  );
 
-  // Get food variety data
-  const uniqueFoods = [...new Set(foodEntries.map(entry => entry.ingredientName))];
-  
+  const uniqueFoods = [...new Set(foodEntries.map((e) => e.ingredientName))];
+
   return {
     period: `${days} days`,
     totalEntries: foodEntries.length,
     uniqueFoods: uniqueFoods.length,
     foodList: uniqueFoods,
     totals,
-    dailyAverages
+    dailyAverages,
   };
 }
 
-/**
- * Creates a structured prompt for nutrition analysis
- * @param {Object} nutritionData - Aggregated nutrition data
- * @param {number} days - Number of days analyzed
- * @returns {string} Formatted prompt
- */
 function createNutritionAnalysisPrompt(nutritionData, days) {
   return `You are a certified nutritionist analyzing ${days} days of food consumption data. 
 
@@ -90,7 +92,7 @@ NUTRITION DATA SUMMARY:
 - Period: ${nutritionData.period}
 - Total food entries: ${nutritionData.totalEntries}
 - Unique foods consumed: ${nutritionData.uniqueFoods}
-- Foods: ${nutritionData.foodList.join(', ')}
+- Foods: ${nutritionData.foodList.join(", ")}
 
 DAILY AVERAGES:
 • Calories: ${nutritionData.dailyAverages.calories} kcal
@@ -161,72 +163,58 @@ Provide a comprehensive nutrition analysis in EXACT JSON format:
 Return ONLY valid JSON.`;
 }
 
-/**
- * Parses the LLM response into structured data
- * @param {string} analysisText - Raw text from LLM
- * @returns {Object} Parsed analysis object
- */
 function parseNutritionAnalysis(analysisText) {
   try {
-    // Extract JSON from the response
     const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error("No valid JSON found in response");
-    }
-    
-    const jsonString = jsonMatch[0];
-    const analysis = JSON.parse(jsonString);
-    
-    // Validate the structure
+    if (!jsonMatch) throw new Error("No valid JSON found in response");
+
+    const analysis = JSON.parse(jsonMatch[0]);
+
     if (!analysis.overallScore || !analysis.recommendations) {
       throw new Error("Invalid analysis structure");
     }
-    
+
     return analysis;
   } catch (error) {
-    console.error("Error parsing nutrition analysis:", error);
-    
-    // Return a fallback structure if parsing fails
     return {
       overallScore: {
         rating: "fair",
         score: 50,
-        summary: "Analysis completed but detailed parsing failed"
+        summary: "Analysis completed but detailed parsing failed",
       },
       macronutrientAnalysis: {
         calorieStatus: "unknown",
         proteinStatus: "unknown",
         carbStatus: "unknown",
         fatStatus: "unknown",
-        fiberStatus: "unknown"
+        fiberStatus: "unknown",
       },
       micronutrientAnalysis: {
         vitaminDeficiencies: [],
         mineralDeficiencies: [],
-        adequateNutrients: []
+        adequateNutrients: [],
       },
       healthConcerns: [],
       recommendations: [
         {
           category: "general",
           priority: "medium",
-          suggestion: "Consult with a registered dietitian for personalized advice",
-          reason: "Professional guidance is recommended for optimal nutrition planning"
-        }
+          suggestion:
+            "Consult with a registered dietitian for personalized advice",
+          reason:
+            "Professional guidance is recommended for optimal nutrition planning",
+        },
       ],
       suggestedFoods: [],
       dietaryPatterns: {
         variety: "unknown",
         balance: "unknown",
         processingLevel: "unknown",
-        observations: "Data analysis was incomplete"
+        observations: "Data analysis was incomplete",
       },
       error: "Partial analysis - detailed parsing failed",
-      rawResponse: analysisText
     };
   }
 }
 
-module.exports = {
-  analyzeNutritionWithGemini
-};
+module.exports = { analyzeNutritionWithGemini };

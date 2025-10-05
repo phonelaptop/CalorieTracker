@@ -16,6 +16,8 @@ import {
 import { useApi } from '../../hooks/useApi'; // Adjust import path
 
 export const AnalyticsPage = () => {
+  console.log('=== AnalyticsPage Component Mounted ===');
+  
   const navigate = useNavigate();
   const { getDailyStats } = useApi();
   const [loading, setLoading] = useState(false);
@@ -25,33 +27,102 @@ export const AnalyticsPage = () => {
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const day = String(today.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    const dateStr = `${year}-${month}-${day}`;
+    console.log('Initial date set to:', dateStr);
+    return dateStr;
   });
 
   useEffect(() => {
+    console.log('useEffect triggered - currentDayDate changed to:', currentDayDate);
     fetchDayData();
   }, [currentDayDate]);
 
   const fetchDayData = async () => {
+    console.log('=== Fetching Day Data ===');
+    console.log('Date:', currentDayDate);
+    console.log('getDailyStats function available:', typeof getDailyStats === 'function');
+    
     setLoading(true);
     try {
+      console.log('Calling getDailyStats API...');
       const result = await getDailyStats(currentDayDate);
+      
+      console.log('API Response received:', {
+        success: result.success,
+        hasData: !!result.data,
+        entriesCount: result.data?.entries?.length,
+        error: result.error
+      });
+      console.log('Full result:', JSON.stringify(result, null, 2));
+      
       if (result.success) {
-        setEntries(result.data.entries || []);
+        const entries = result.data.entries || [];
+        console.log('Setting entries:', entries.length, 'entries');
+        if (entries.length > 0) {
+          console.log('Sample entry:', JSON.stringify(entries[0], null, 2));
+        }
+        setEntries(entries);
       } else {
-        console.error('Failed to fetch daily stats:', result.error);
+        console.error('API call failed:', result.error);
+        console.error('Full error object:', result);
         setEntries([]);
       }
     } catch (error) {
-      console.error('Error fetching daily stats:', error);
+      console.error('=== Error in fetchDayData ===');
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      console.error('Full error:', error);
       setEntries([]);
     } finally {
       setLoading(false);
+      console.log('fetchDayData complete, loading set to false');
+    }
+  };
+
+  const handleHealthSuggestionsClick = async () => {
+    console.log('=== Health Suggestions Button Clicked ===');
+    console.log('Current entries count:', entries.length);
+    
+    try {
+      // Option 1: Navigate to a health suggestions page
+      console.log('Navigating to /health-suggestions');
+      navigate('/health-suggestions');
+      
+      /* Option 2: Call the API directly and show results in a modal
+      console.log('Fetching health suggestions directly...');
+      
+      const response = await fetch('/api/food/analysis/health-suggestions?days=7', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          // Add authorization header if needed
+          // 'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      console.log('Response status:', response.status);
+      const data = await response.json();
+      console.log('Health suggestions received:', data);
+      
+      if (data.success) {
+        // Handle the suggestions - show in modal, navigate, etc.
+        console.log('Analysis data:', data.data);
+      } else {
+        console.error('Failed to get suggestions:', data.message);
+      }
+      */
+      
+    } catch (error) {
+      console.error('=== Error getting health suggestions ===');
+      console.error('Error:', error);
     }
   };
 
   const processEntriesForChart = (entries) => {
-    return entries.map((entry, index) => {
+    console.log('Processing entries for chart:', entries.length, 'entries');
+    
+    const processed = entries.map((entry, index) => {
       const consumedTime = new Date(entry.consumedAt);
       const timeLabel = consumedTime.toLocaleTimeString('en-US', { 
         hour: 'numeric', 
@@ -59,7 +130,7 @@ export const AnalyticsPage = () => {
         hour12: true 
       });
       
-      return {
+      const chartEntry = {
         id: entry._id || index,
         name: entry.ingredientName,
         timeLabel: timeLabel,
@@ -70,10 +141,21 @@ export const AnalyticsPage = () => {
         consumedAt: entry.consumedAt,
         sortTime: consumedTime.getTime()
       };
+      
+      if (index === 0) {
+        console.log('Sample processed entry:', chartEntry);
+      }
+      
+      return chartEntry;
     }).sort((a, b) => a.sortTime - b.sortTime);
+    
+    console.log('Processed chart data:', processed.length, 'entries');
+    return processed;
   };
 
   const processHourlyTotals = (entries) => {
+    console.log('Processing hourly totals for', entries.length, 'entries');
+    
     const hourlyTotals = Array.from({ length: 24 }, (_, hour) => ({
       hour,
       hourLabel: formatHour(hour),
@@ -82,9 +164,16 @@ export const AnalyticsPage = () => {
       foods: []
     }));
 
-    entries.forEach(entry => {
+    entries.forEach((entry, idx) => {
       const consumedTime = new Date(entry.consumedAt);
       const hour = consumedTime.getHours();
+      
+      if (idx < 3) {
+        console.log(`Entry ${idx}: consumed at hour ${hour}`, {
+          food: entry.ingredientName,
+          calories: entry.calories
+        });
+      }
       
       if (hourlyTotals[hour]) {
         hourlyTotals[hour].calories += entry.calories || 0;
@@ -101,6 +190,9 @@ export const AnalyticsPage = () => {
       }
     });
 
+    const hoursWithData = hourlyTotals.filter(h => h.entries > 0).length;
+    console.log('Hourly totals:', hoursWithData, 'hours with data');
+    
     return hourlyTotals;
   };
 
@@ -112,6 +204,7 @@ export const AnalyticsPage = () => {
   };
 
   const handlePreviousDay = () => {
+    console.log('Previous day button clicked, current:', currentDayDate);
     const [year, month, day] = currentDayDate.split('-').map(Number);
     const currentDate = new Date(year, month - 1, day);
     currentDate.setDate(currentDate.getDate() - 1);
@@ -119,10 +212,13 @@ export const AnalyticsPage = () => {
     const newYear = currentDate.getFullYear();
     const newMonth = String(currentDate.getMonth() + 1).padStart(2, '0');
     const newDay = String(currentDate.getDate()).padStart(2, '0');
-    setCurrentDayDate(`${newYear}-${newMonth}-${newDay}`);
+    const newDate = `${newYear}-${newMonth}-${newDay}`;
+    console.log('Setting date to:', newDate);
+    setCurrentDayDate(newDate);
   };
 
   const handleNextDay = () => {
+    console.log('Next day button clicked, current:', currentDayDate);
     const [year, month, day] = currentDayDate.split('-').map(Number);
     const currentDate = new Date(year, month - 1, day);
     const today = new Date();
@@ -132,7 +228,11 @@ export const AnalyticsPage = () => {
       const newYear = currentDate.getFullYear();
       const newMonth = String(currentDate.getMonth() + 1).padStart(2, '0');
       const newDay = String(currentDate.getDate()).padStart(2, '0');
-      setCurrentDayDate(`${newYear}-${newMonth}-${newDay}`);
+      const newDate = `${newYear}-${newMonth}-${newDay}`;
+      console.log('Setting date to:', newDate);
+      setCurrentDayDate(newDate);
+    } else {
+      console.log('Cannot go forward - already at today');
     }
   };
 
@@ -170,13 +270,25 @@ export const AnalyticsPage = () => {
   const chartData = hasData ? processEntriesForChart(entries) : [];
   const hourlyData = hasData ? processHourlyTotals(entries) : [];
 
+  console.log('Render state:', {
+    loading,
+    hasData,
+    entriesCount: entries.length,
+    totalCalories,
+    isToday,
+    currentDayDate
+  });
+
   if (loading) {
+    console.log('Rendering loading state');
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
         <CircularProgress />
       </Box>
     );
   }
+
+  console.log('Rendering main content');
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -188,7 +300,7 @@ export const AnalyticsPage = () => {
           variant="contained"
           size="large"
           startIcon={<Psychology />}
-          onClick={() => navigate('/health-suggestions')}
+          onClick={handleHealthSuggestionsClick}
           sx={{ 
             mt: 3,
             py: 1.5,

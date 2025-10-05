@@ -4,14 +4,12 @@ import axios from "axios";
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL || "http://localhost:8080/",
   headers: { "Content-Type": "application/json" },
-  timeout: 15000,
+  timeout: 60000,
 });
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
@@ -26,6 +24,16 @@ api.interceptors.response.use(
   }
 );
 
+const handleApiError = (error, defaultMessage) => ({
+  success: false,
+  error:
+    error.response?.data?.error ||
+    error.response?.data?.message ||
+    defaultMessage,
+});
+
+const handleApiSuccess = (data) => ({ success: true, data });
+
 const ApiContext = createContext();
 
 export const AppProvider = ({ children }) => {
@@ -35,11 +43,8 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) {
-      fetchCurrentUser();
-    } else {
-      setLoading(false);
-    }
+    if (token) fetchCurrentUser();
+    else setLoading(false);
   }, []);
 
   const fetchCurrentUser = async () => {
@@ -66,8 +71,7 @@ export const AppProvider = ({ children }) => {
 
       return { success: true, user, message };
     } catch (error) {
-      const errorMessage = error.response?.data?.error || "Login failed";
-      return { success: false, error: errorMessage };
+      return handleApiError(error, "Login failed");
     } finally {
       setLoading(false);
     }
@@ -92,8 +96,7 @@ export const AppProvider = ({ children }) => {
 
       return { success: true, user, message: response.data.message };
     } catch (error) {
-      const errorMessage = error.response?.data?.error || "Registration failed";
-      return { success: false, error: errorMessage };
+      return handleApiError(error, "Registration failed");
     } finally {
       setLoading(false);
     }
@@ -108,12 +111,18 @@ export const AppProvider = ({ children }) => {
   const getDailyStats = async (date) => {
     try {
       const response = await api.get(`/api/foodentry/stats/daily?date=${date}`);
-      return { success: true, data: response.data };
+      return handleApiSuccess(response.data);
     } catch (error) {
-      return {
-        success: false,
-        error: error.response?.data?.error || "Failed to fetch daily stats",
-      };
+      return handleApiError(error, "Failed to fetch daily stats");
+    }
+  };
+
+  const saveFoodEntries = async (entries) => {
+    try {
+      const response = await api.post("/api/foodentry", entries);
+      return handleApiSuccess(response.data);
+    } catch (error) {
+      return handleApiError(error, "Failed to save entries");
     }
   };
 
@@ -125,38 +134,35 @@ export const AppProvider = ({ children }) => {
       const response = await api.post("/api/ml/upload", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      return { success: true, data: response.data };
+      return handleApiSuccess(response.data);
     } catch (error) {
-      return {
-        success: false,
-        error: error.response?.data?.error || "Image analysis failed",
-      };
+      return handleApiError(error, "Image analysis failed");
     }
   };
 
-  const saveFoodEntries = async (entries) => {
-    try {
-      const response = await api.post("/api/foodentry", entries);
-      return { success: true, data: response.data };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.response?.data?.error || "Failed to save entries",
-      };
-    }
-  };
-
-  const getHealthAnalysis = async (userId, days = 7) => {
+  const getHealthAnalysis = async (days = 7) => {
     try {
       const response = await api.get(
-        `/api/foodentry/analysis/${userId}?days=${days}`
+        `/api/foodentry/analysis/health-suggestions?days=${days}`
       );
-      return { success: true, data: response.data };
+
+      if (response.data.success === false) {
+        return {
+          success: false,
+          error:
+            response.data.message || response.data.error || "Analysis failed",
+        };
+      }
+
+      return handleApiSuccess(response.data.data || response.data);
     } catch (error) {
-      return {
-        success: false,
-        error: error.response?.data?.error || "Failed to fetch health analysis",
-      };
+      if (error.code === "ECONNABORTED") {
+        return handleApiError(
+          error,
+          "Request timeout - analysis took too long"
+        );
+      }
+      return handleApiError(error, "Failed to fetch health analysis");
     }
   };
 
@@ -168,8 +174,8 @@ export const AppProvider = ({ children }) => {
     register,
     logout,
     getDailyStats,
-    analyzeImage,
     saveFoodEntries,
+    analyzeImage,
     getHealthAnalysis,
   };
 
