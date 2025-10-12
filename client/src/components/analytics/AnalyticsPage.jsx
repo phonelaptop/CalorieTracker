@@ -405,11 +405,11 @@ export const AnalyticsPage = () => {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
                   dataKey="name" 
-                  label={{ value: 'Food Items (ordered by time)', position: 'insideBottom', offset: -10 }}
-                  interval={0}
+                  interval="preserveStartEnd"
                   angle={-45}
                   textAnchor="end"
-                  height={100}
+                  height={140}
+                  tick={{ fontSize: 11 }}
                 />
                 <YAxis 
                   label={{ value: 'Calories', angle: -90, position: 'insideLeft' }}
@@ -448,7 +448,7 @@ export const AnalyticsPage = () => {
                 <Bar 
                   dataKey="calories" 
                   fill="#f44336" 
-                  name="Calories"
+                  name="Calories per Food Item"
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>
@@ -477,7 +477,6 @@ export const AnalyticsPage = () => {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
                   dataKey="hourLabel" 
-                  label={{ value: 'Hour of Day', position: 'insideBottom', offset: -5 }}
                   interval={0}
                   angle={-45}
                   textAnchor="end"
