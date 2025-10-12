@@ -3,7 +3,7 @@ import axios from "axios";
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: "https://xmttymakxz.us-west-2.awsapprunner.com ",
+  baseURL: "https://xmttymakxz.us-west-2.awsapprunner.com",
   headers: { "Content-Type": "application/json" },
   timeout: 60000,
 });
