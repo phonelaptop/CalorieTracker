@@ -4,11 +4,11 @@ import { Container, Typography, Box, CircularProgress, Alert, Button, Snackbar }
 import { FileUploader } from './FileUploader';
 import { FilePreview } from './FilePreview';
 import { NutritionTable } from './NutritionTable';
-import { foodApi } from '../../api/foodApi';
+import { useApi } from '../../hooks/useApi';
 import { calculateTotals, formatFoodEntry } from '../../utils/nutrition';
-
 export const UploadFilePage = () => {
   const navigate = useNavigate();
+  const { analyzeImage, saveFoodEntries } = useApi();
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -17,31 +17,26 @@ export const UploadFilePage = () => {
   const [editData, setEditData] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-
   const handleFileChange = (e) => {
-    const selectedFiles = Array.from(e.target.files).filter(file => 
+    const selectedFiles = Array.from(e.target.files).filter(file =>
       file.type.startsWith('image/')
     );
     setFiles(selectedFiles);
     setResult(null);
     setError(null);
   };
-
   const handleUpload = async () => {
     if (files.length === 0) return;
     setLoading(true);
     setError(null);
-
-    try {
-      const data = await foodApi.analyzeImage(files[0]);
-      setResult(data);
-    } catch (err) {
-      setError(err.response?.data?.message || err.message);
-    } finally {
-      setLoading(false);
+    const response = await analyzeImage(files[0]);
+    if (response.success) {
+      setResult(response.data);
+    } else {
+      setError(response.error);
     }
+    setLoading(false);
   };
-
   const handleEdit = (index) => {
     const item = result[index];
     setEditingRow(index);
@@ -61,7 +56,6 @@ export const UploadFilePage = () => {
       iron: item.nutritionFacts['Iron'] || 0,
     });
   };
-
   const handleSaveEdit = () => {
     const updatedResult = [...result];
     updatedResult[editingRow] = {
@@ -85,54 +79,51 @@ export const UploadFilePage = () => {
     setEditingRow(null);
     setEditData({});
   };
-
   const handleDelete = (index) => {
     setResult(result.filter((_, i) => i !== index));
   };
-
   const handleSubmit = async () => {
     if (!result || result.length === 0) return;
     setSubmitting(true);
-
-    try {
-      const foodEntries = result.map(item => formatFoodEntry(item, files[0]));
-      await foodApi.saveFoodEntries(foodEntries);
-      setSnackbar({ open: true, message: 'Food entries saved successfully!', severity: 'success' });
+    const foodEntries = result.map(item => formatFoodEntry(item, files[0]));
+    const response = await saveFoodEntries(foodEntries);
+    if (response.success) {
+      setSnackbar({
+        open: true,
+        message: 'Food entries saved successfully!',
+        severity: 'success'
+      });
       setResult(null);
       setFiles([]);
-      navigate('/analytics');
-    } catch (err) {
-      setSnackbar({ open: true, message: err.response?.data?.message || 'Failed to save', severity: 'error' });
-    } finally {
-      setSubmitting(false);
+      setTimeout(() => navigate('/analytics'), 1000);
+    } else {
+      setSnackbar({
+        open: true,
+        message: response.error || 'Failed to save',
+        severity: 'error'
+      });
     }
+    setSubmitting(false);
   };
-
   const totals = calculateTotals(result);
-
   return (
     <Container maxWidth="xl" sx={{ mt: 4 }}>
       <Typography variant="h4" gutterBottom align="center" sx={{ fontWeight: 700, mb: 4 }}>
         Food Nutrition Tracker
       </Typography>
-
-      <FileUploader 
-        files={files} 
-        loading={loading} 
+      <FileUploader
+        files={files}
+        loading={loading}
         onFileChange={handleFileChange}
         onUpload={handleUpload}
       />
-
       <FilePreview file={files[0]} />
-
       {loading && (
         <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
           <CircularProgress />
         </Box>
       )}
-
       {error && <Alert severity="error" sx={{ mb: 4 }}>{error}</Alert>}
-
       {result && (
         <Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -141,7 +132,6 @@ export const UploadFilePage = () => {
               {submitting ? 'Saving...' : 'Save All'}
             </Button>
           </Box>
-
           {totals && (
             <Box sx={{ mb: 2, p: 2, bgcolor: 'success.light', borderRadius: 1 }}>
               <Typography variant="h6" color="white" align="center">
@@ -149,7 +139,6 @@ export const UploadFilePage = () => {
               </Typography>
             </Box>
           )}
-
           <NutritionTable
             data={result}
             editingRow={editingRow}
@@ -162,7 +151,6 @@ export const UploadFilePage = () => {
           />
         </Box>
       )}
-
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}
@@ -172,8 +160,7 @@ export const UploadFilePage = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
-      <Box sx={{height: "31vh"}}>
-      </Box>
+      <Box sx={{ height: "31vh" }} />
     </Container>
   );
-};
+};  
