@@ -1,18 +1,23 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
 
+// Create axios instance with base configuration
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "http://localhost:8080/",
+  baseURL: process.env.REACT_APP_API_URL || "http://localhost:8080",
   headers: { "Content-Type": "application/json" },
   timeout: 60000,
 });
 
+// Add auth token to all requests
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 });
 
+// Handle 401 errors globally
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -24,16 +29,6 @@ api.interceptors.response.use(
   }
 );
 
-const handleApiError = (error, defaultMessage) => ({
-  success: false,
-  error:
-    error.response?.data?.error ||
-    error.response?.data?.message ||
-    defaultMessage,
-});
-
-const handleApiSuccess = (data) => ({ success: true, data });
-
 const ApiContext = createContext();
 
 export const AppProvider = ({ children }) => {
@@ -41,16 +36,20 @@ export const AppProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Fetch current user on mount
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) fetchCurrentUser();
-    else setLoading(false);
+    if (token) {
+      fetchCurrentUser();
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   const fetchCurrentUser = async () => {
     try {
-      const response = await api.get("/api/auth/me");
-      setUser(response.data);
+      const { data } = await api.get("/api/auth/me");
+      setUser(data);
       setIsAuthenticated(true);
     } catch (error) {
       logout();
@@ -61,44 +60,45 @@ export const AppProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      setLoading(true);
-      const response = await api.post("/api/auth/login", { email, password });
-      const { token, user, message } = response.data;
-
-      localStorage.setItem("token", token);
-      setUser(user);
-      setIsAuthenticated(true);
-
-      return { success: true, user, message };
+      const { data } = await api.post("/api/auth/login", { email, password });
+      
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+        setUser(data.user);
+        setIsAuthenticated(true);
+        return { success: true, user: data.user };
+      }
+      
+      return { success: false, error: "No token received" };
     } catch (error) {
-      return handleApiError(error, "Login failed");
-    } finally {
-      setLoading(false);
+      return { 
+        success: false, 
+        error: error.response?.data?.message || "Login failed" 
+      };
     }
   };
 
   const register = async (userData) => {
     try {
-      setLoading(true);
-      const response = await api.post("/api/auth/register", {
+      const { data } = await api.post("/api/auth/register", {
         first_name: userData.firstName,
         last_name: userData.lastName,
         email: userData.email,
         password: userData.password,
       });
 
-      const { token, user } = response.data;
-      if (token) {
-        localStorage.setItem("token", token);
-        setUser(user);
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+        setUser(data.user);
         setIsAuthenticated(true);
       }
 
-      return { success: true, user, message: response.data.message };
+      return { success: true, user: data.user };
     } catch (error) {
-      return handleApiError(error, "Registration failed");
-    } finally {
-      setLoading(false);
+      return { 
+        success: false, 
+        error: error.response?.data?.message || "Registration failed" 
+      };
     }
   };
 
@@ -110,59 +110,78 @@ export const AppProvider = ({ children }) => {
 
   const getDailyStats = async (date) => {
     try {
-      const response = await api.get(`/api/foodentry/stats/daily?date=${date}`);
-      return handleApiSuccess(response.data);
+      const { data } = await api.get(`/api/foodentry/stats/daily?date=${date}`);
+      return { success: true, data };
     } catch (error) {
-      return handleApiError(error, "Failed to fetch daily stats");
+      return { 
+        success: false, 
+        error: error.response?.data?.message || "Failed to fetch stats" 
+      };
     }
   };
 
   const saveFoodEntries = async (entries) => {
     try {
-      const response = await api.post("/api/foodentry", entries);
-      return handleApiSuccess(response.data);
+      const { data } = await api.post("/api/foodentry", entries);
+      return { success: true, data };
     } catch (error) {
-      return handleApiError(error, "Failed to save entries");
+      return { 
+        success: false, 
+        error: error.response?.data?.message || "Failed to save entries" 
+      };
     }
   };
 
   const analyzeImage = async (imageFile) => {
+    if (!imageFile) {
+      return { success: false, error: "No image file provided" };
+    }
+
     try {
       const formData = new FormData();
       formData.append("image", imageFile);
 
-      const response = await api.post("/api/ml/upload", formData, {
+      const { data } = await api.post("/api/ml/upload", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      return handleApiSuccess(response.data);
+
+      return { success: true, data };
     } catch (error) {
-      return handleApiError(error, "Image analysis failed");
+      return { 
+        success: false, 
+        error: error.response?.data?.message || "Image analysis failed" 
+      };
     }
   };
 
   const getHealthAnalysis = async (days = 7) => {
     try {
-      const response = await api.get(
+      const { data } = await api.get(
         `/api/foodentry/analysis/health-suggestions?days=${days}`
       );
 
-      if (response.data.success === false) {
-        return {
-          success: false,
-          error:
-            response.data.message || response.data.error || "Analysis failed",
-        };
+      if (data.success === false) {
+        return { success: false, error: data.message || "Analysis failed" };
       }
 
-      return handleApiSuccess(response.data.data || response.data);
+      return { success: true, data: data.data || data };
     } catch (error) {
-      if (error.code === "ECONNABORTED") {
-        return handleApiError(
-          error,
-          "Request timeout - analysis took too long"
-        );
-      }
-      return handleApiError(error, "Failed to fetch health analysis");
+      return { 
+        success: false, 
+        error: error.response?.data?.message || "Failed to fetch analysis" 
+      };
+    }
+  };
+
+  const getRecentFoods = async (days = 7) => {
+    try {
+      const { data } = await api.get(`/api/foodentry/recent?days=${days}`);
+      return { success: true, data };
+    } catch (error) {
+      return { 
+        success: false, 
+        error: error.response?.data?.message || "Failed to fetch recent foods" 
+      };
     }
   };
 
@@ -177,6 +196,7 @@ export const AppProvider = ({ children }) => {
     saveFoodEntries,
     analyzeImage,
     getHealthAnalysis,
+    getRecentFoods,
   };
 
   return <ApiContext.Provider value={value}>{children}</ApiContext.Provider>;
