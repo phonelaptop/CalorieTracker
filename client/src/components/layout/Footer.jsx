@@ -23,12 +23,9 @@ export const Footer = () => {
               <Link href="#terms" color="text.secondary" underline="hover" sx={{ fontFamily: "Montserrat" }}>
                 Terms
               </Link>
-              <Link href="#contact" color="text.secondary" underline="hover" sx={{ fontFamily: "Montserrat" }}>
-                Contact
-              </Link>
             </Box>
             <Typography variant="body2" color="text.secondary" sx={{ fontFamily: "Montserrat" }}>
-              © 2025 Jake Company
+              © 2025 Company
             </Typography>
           </Box>
         </Container>
