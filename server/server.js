@@ -10,42 +10,44 @@ const { mlRoutes } = require("./routes/mlRoutes");
 const { foodEntryRoutes } = require("./routes/foodEntryRoutes");
 
 const app = express();
+const PORT = process.env.PORT || 8080;
 
+// Middleware
 app.use(express.json());
-
 app.use(cors({
   origin: [
     'http://localhost:3000',
-    'https://main.d238f39xg7s3sq.amplifyapp.com', // Your Amplify frontend
-    'https://xmttymakxz.us-west-2.awsapprunner.com' // Your backend (for testing)
-  ],
+    process.env.CLIENT_URL
+  ].filter(Boolean),
   credentials: true
 }));
 
-const port = process.env.PORT || 8080;
+// Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/users", requireAuth, userRoutes);
+app.use("/api/ml", requireAuth, mlRoutes);
+app.use("/api/foodentry", requireAuth, foodEntryRoutes);
 
-const server = async () => {
+// Health check
+app.get("/health", (req, res) => {
+  res.status(200).json({ 
+    status: "healthy", 
+    timestamp: new Date().toISOString() 
+  });
+});
+
+// Start server
+const startServer = async () => {
   try {
     await connectToDatabase();
-    console.log("Connected to database successfully");
-
-    app.use("/api/auth", authRoutes);
-    app.use("/api/users", requireAuth, userRoutes);
-    app.use("/api/ml", requireAuth, mlRoutes);
-    app.use("/api/foodentry", requireAuth, foodEntryRoutes);
-
-    app.get("/health", (req, res) => {
-      res.status(200).json({ status: "healthy", timestamp: new Date().toISOString() });
-    });
-
-    app.listen(port, '0.0.0.0', () => {
-      console.log(`Server listening on port ${port}`);
-      console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server running on port ${PORT}`);
     });
   } catch (error) {
-    console.error("Failed to start server:", error);
+    console.error("Server startup failed:", error.message);
     process.exit(1);
   }
 };
 
-server();
+startServer();
