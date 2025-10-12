@@ -6,7 +6,6 @@ import food from "../../img/food.jpg";
 
 import { InstructionsCard } from "./InstructionsCard";
 import { AIHealthSuggestions } from "../dashboard/AIHealthSuggestions";
-import { RecentFoodsCard } from "./RecentFoods/RecentFoodCard";
 import { NutritionProgress } from "../dashboard/NutritionProgress";
 import { NutritionNeeds } from "../dashboard/NutritionNeeds";
 
@@ -183,7 +182,6 @@ export const Dashboard = () => {
       <Box sx={{ maxWidth: 800, width: "100%", px: { xs: 2, sm: 2 } }}>
         <InstructionsCard />
         <AIHealthSuggestions />
-        <RecentFoodsCard recentFoods={recentFoods} loading={loading} />
         <NutritionProgress nutritionData={nutritionData} loading={loading} />
         <NutritionNeeds nutritionData={nutritionData} loading={loading} />
       </Box>
