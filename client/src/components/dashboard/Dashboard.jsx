@@ -147,7 +147,7 @@ export const Dashboard = () => {
             mb: { xs: 1, sm: 2 }
           }}
         >
-          CalorieTracker
+          SnacTrack
         </Typography>
 
         <Typography
