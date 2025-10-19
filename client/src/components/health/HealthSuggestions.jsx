@@ -107,7 +107,7 @@ export const HealthSuggestions = () => {
 
       <Grid container spacing={3}>
         {/* Nutrition Status */}
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={6}width="100%">
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
@@ -132,8 +132,8 @@ export const HealthSuggestions = () => {
         </Grid>
 
         {/* Deficiencies */}
-        <Grid item xs={12} md={6}>
-          <Card sx={{ height: '100%' }}>
+        <Grid item xs={12} md={6} width="100%">
+          <Card sx={{ height: '100%'}}>
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
                 <Warning color="warning" sx={{ mr: 1 }} />

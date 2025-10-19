@@ -366,7 +366,7 @@ export const AnalyticsPage = () => {
       </Card>
 
       {hasData && (
-        <Box display="flex" justifyContent="center" gap={4} mb={4}>
+        <Box display="flex" justifyContent="center" gap={4} mb={4} flexDirection="column">
           <Paper sx={{ p: 3, textAlign: 'center', minWidth: 120 }}>
             <Typography variant="h4" fontWeight="bold" color="error.main">
               {Math.round(totalCalories)}
