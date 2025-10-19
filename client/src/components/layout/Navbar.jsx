@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import { AppBar, Toolbar, Typography, Button, Container } from "@mui/material";
+import { AppBar, Box, Toolbar, Typography, Button, Container } from "@mui/material";
 import { useApi } from "../../hooks/useApi";
+import SnacTrackLogo from "../../img/SnacTrackLogo.png";
+
 
 export const Navbar = () => {
   const { logout } = useApi();
@@ -22,7 +24,7 @@ export const Navbar = () => {
             sx={{ fontWeight: 600, color: "#000", cursor: "pointer" }}
             onClick={() => navigate("/")}
           >
-            CalorieTracker
+            SnacTrack
           </Typography>
 
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
