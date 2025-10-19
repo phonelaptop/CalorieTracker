@@ -23,7 +23,7 @@ export const LoadingScreen = () => {
           color: '#666'
         }}
       >
-        Loading CalorieTracker...
+        Loading SnacTrack...
       </Typography>
     </Box>
   );

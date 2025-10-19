@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import { AppBar, Box, Toolbar, Typography, Button, Container } from "@mui/material";
+import { AppBar, Toolbar, Typography, Button, Container } from "@mui/material";
 import { useApi } from "../../hooks/useApi";
-import SnacTrackLogo from "../../img/SnacTrackLogo.png";
 
 
 export const Navbar = () => {

@@ -22,7 +22,7 @@ export const InstructionsCard = () => {
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Assignment />
-            How to Use CalorieTracker
+            How to Use SnacTrack
           </Box>
         </Button>
         
